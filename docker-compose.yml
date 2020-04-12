@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  autoheal:
+    restart: always
+    image: willfarrell/autoheal:v0.7.0
+    container_name: mtproxy-autoheal
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "2048k"
+        max-file: "10"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  mtproxy:
+    restart: on-failure
+    labels:
+      - "autoheal=true"
+    image: morgulio/mtproxy:1.0
+    container_name: mtproxy
+#    command: -u nobody
+    environment:
+#      - SECRET=
+#      - SECRET_COUNT=
+#      - TAG=
+    volumes:
+      - ./config:/data
+    ports:
+      - "2398:2398"
+      - "443:443"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "2048k"
+        max-file: "10"
+    healthcheck:
+      test: ["CMD-SHELL", "netstat -tulpn | grep :443"]
